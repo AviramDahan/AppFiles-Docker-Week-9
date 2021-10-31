@@ -1,0 +1,142 @@
+
+- name: deploy applications
+  hosts: applications
+  remote_user: root
+
+  # Setting Variables
+  vars_files:
+    - /etc/ansible/playbooks/variables_main.yml
+
+  tasks:
+
+    - include_vars: variables_main.yml
+
+      # Run an update
+    - name: Update apt-get repo and cache
+      become: yes
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+    - name: Upgrade all apt packages
+      become: yes
+      apt: upgrade=dist force_apt_get=yes
+
+
+
+    # Node files+install v14.x
+    - name: Add nodejs repository
+      shell: curl -fsSL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+      args:
+        warn: no
+
+     # Install nodejs v14
+    - name: Install the nodejs
+      become: yes
+      apt:
+       update_cache: yes
+       name: nodejs
+       state: present
+
+    #Create folder for application
+    - name: "Create a directory for app"
+      file:
+        path: app
+        state: directory
+
+
+
+    #App files copy from artifact
+    - name: "copy files from artifact to VMS "
+      ansible.builtin.copy:
+        src: /home/aviramsuser/myagent/_work/r5/a/App-Files/
+        dest: "/home/aviramsuser/app"
+
+
+
+     # Created .env to initial settings
+    - name: create .env file
+      copy:
+        dest: "/home/aviramsuser/app/.env"
+        content: |
+
+           #PG
+           PGHOST={{postgres_host}}
+           PGUSERNAME={{postgres_username}}
+           PGDATABASE={{postgres_database}}
+           PGPASSWORD={{postgres_password}}
+           PGPORT={{postgres_port}}
+           #Node Weight Tracker
+           HOST_URL=http://{{lb_ip}}:{{port_url}}
+           COOKIE_ENCRYPT_PWD={{cookie_pwd}}
+           NODE_ENV={{node_enviroment}}
+           # Okta configuration
+           OKTA_ORG_URL=https://{{okta_url}}
+           OKTA_CLIENT_ID={{okta_id}}
+           OKTA_CLIENT_SECRET={{okta_secret}}
+
+     # Npm install
+    - name: Install app
+      command: npm install
+      args:
+        chdir: "/home/aviramsuser/app"
+
+
+
+     # install all dependencies for application
+    - name: install dependencies
+      become: yes
+      command: "npm install {{ item }}"
+      args:
+        chdir: '/home/aviramsuser/app'
+      with_items:
+        - '@hapi/hapi@19'
+        - '@hapi/bell@12'
+        - '@hapi/boom@9'
+        - '@hapi/cookie@11'
+        - '@hapi/inert@6'
+        - '@hapi/joi@17'
+        - '@hapi/vision@6'
+        - 'dotenv@8'
+        - 'ejs@3'
+        - 'postgres@1'
+
+
+     # install nodeman for application
+    - name: install nodemon
+      become: yes
+      command: "npm install --save-dev nodemon@2"
+      args:
+        chdir: "/home/aviramsuser/app"
+
+     # Initialize the database
+    - name: initialize db
+      become: yes
+      command: npm run initdb
+      run_once: true
+      args:
+        chdir: "/home/aviramsuser/app"
+
+    # Install PM2
+    - name: install PM2
+      become: yes
+      command: "npm install pm2 -g"
+      args:
+        chdir: "/home/aviramsuser/app"
+
+    # PM2 Save command in system
+    - name: run app command pm2
+      command: 'pm2 start "npm run dev" --name weight_app'
+      args:
+        chdir: "/home/aviramsuser/app"
+
+    - name: run pm2 startup
+      become: true
+      command: 'pm2 startup systemd -u {{ username_root }} --hp /home/{{ username_root }}'
+      environment:
+        PATH: "{{ ansible_env.PATH }}"
+      ignore_errors: True
+
+   # Save settings of PM2
+    - name: Save PM2 configuration
+      command: pm2 save
+
+

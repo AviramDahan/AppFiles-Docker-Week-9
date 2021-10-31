@@ -1,0 +1,29 @@
+
+  #Setting Variables
+
+
+  # Okta data
+okta_url: dev-18279679.okta.com
+okta_id: 0oa2eklg87zfY2OAo5d7
+okta_secret: Wk95FGj0FfNXkwZqp-YRMC4F_5DSjU8vbM3dQ41R
+
+  # Postgresql info
+postgres_host: postgresql-cicd-staging.postgres.database.azure.com
+postgres_username: postgres@postgresql-cicd-staging
+postgres_password: Aa112233!
+postgres_database: postgres
+postgres_port: 5432
+lb_ip: 51.124.220.111
+
+   #variables .env securie
+cookie_pwd: superAwesomePasswordStringThatIsAtLeast32CharactersLong!
+port_url: 8080
+node_enviroment: development
+
+   # path
+path: /home/aviramsuser/app
+
+   # users
+username_root: aviramsuser
+
+
