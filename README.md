@@ -47,6 +47,8 @@ Receive a set of variables using group variables that are connected to a vault k
 * Branch policies to force code review and build validation configured for the master/main branch
 * CI/CD pipeline to automate the application lifecycle
 * Images stored on Azure Container Registry (ACR)
+ ![image](https://user-images.githubusercontent.com/89352211/141610776-ed6556ae-aa44-4ce3-af20-2ee9d674e929.png)
+
 
 
 # Node.js Weight Tracker
